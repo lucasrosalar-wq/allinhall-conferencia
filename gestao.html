@@ -219,9 +219,13 @@
   .btn-imprimir { background: var(--preto); color: #fff; }
 
   @media print {
+    body { background: #fff; }
     body * { visibility: hidden; }
     #invoiceParaImprimir, #invoiceParaImprimir * { visibility: visible; }
-    #invoiceParaImprimir { position: absolute; top: 0; left: 0; width: 100%; padding: 0; }
+    #invoiceParaImprimir {
+      position: absolute; top: 0; left: 0; width: 100%; padding: 0; max-width: none;
+      box-shadow: none; border-radius: 0; margin: 0;
+    }
   }
 </style>
 </head>
