@@ -173,43 +173,45 @@
 
   .oculto { display: none !important; }
 
-  /* Documento de notificação (mesmo visual do gerador-cobranca.html) */
+  /* Documento de notificação (idêntico ao gerador-cobranca.html já validado) */
   .invoice-wrap {
-    background: #fff; border-radius: 10px; padding: 34px; width: 100%; max-width: 620px; margin: 0 auto;
+    background: #fff; border-radius: 10px; width: 640px; max-width: 100%; padding: 44px; margin: 0 auto;
   }
   .invoice-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
-  .invoice-top h2 { font-size: 22px; line-height: 1.25; letter-spacing: .3px; }
-  .invoice-top img { height: 42px; opacity: .9; }
+  .invoice-top h2 { font-size: 24px; line-height: 1.25; letter-spacing: .3px; }
+  .invoice-top img { height: 46px; opacity: .9; }
   .ref-linha {
     font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: .5px;
-    border-bottom: 3px solid var(--laranja); padding-bottom: 14px; margin-bottom: 18px;
+    border-bottom: 3px solid var(--laranja); padding-bottom: 16px; margin-bottom: 20px;
   }
-  .invoice-wrap .corpo p { font-size: 13px; line-height: 1.55; margin: 0 0 12px; }
-  table.itens { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 18px 0; }
+  .invoice-wrap .corpo p { font-size: 13.5px; line-height: 1.55; margin: 0 0 14px; }
+  table.itens { width: 100%; border-collapse: collapse; font-size: 13px; margin: 20px 0; }
   table.itens th {
-    text-align: left; font-size: 10.5px; text-transform: uppercase; color: #888;
+    text-align: left; font-size: 11px; text-transform: uppercase; color: #888;
     border-bottom: 2px solid var(--preto); padding: 6px 4px;
   }
-  table.itens td { padding: 7px 4px; border-bottom: 1px solid var(--borda); }
-  table.itens th:nth-child(2), table.itens td:nth-child(2) { text-align: center; }
+  table.itens td { padding: 8px 4px; border-bottom: 1px solid var(--borda); }
+  table.itens th:nth-child(2), table.itens td:nth-child(2),
   table.itens th:nth-child(3), table.itens td:nth-child(3),
-  table.itens th:nth-child(4), table.itens td:nth-child(4) { text-align: right; }
+  table.itens th:nth-child(4), table.itens td:nth-child(4) { text-align: center; }
+  table.itens th:nth-child(5), table.itens td:nth-child(5),
+  table.itens th:nth-child(6), table.itens td:nth-child(6) { text-align: right; }
   .total-linha td { border-top: 2px solid var(--preto); border-bottom: none; font-weight: bold; }
   .aviso {
-    background: var(--laranja); color: #fff; border-radius: 6px; padding: 16px 18px 16px 50px;
-    position: relative; font-size: 12px; line-height: 1.6; margin-top: 20px;
+    background: var(--laranja); color: #fff; border-radius: 6px; padding: 18px 20px 18px 56px;
+    position: relative; font-size: 12.5px; line-height: 1.6; margin-top: 24px;
   }
   .aviso::before {
-    content: "!"; position: absolute; left: 16px; top: 16px; width: 22px; height: 22px; border-radius: 50%;
-    background: #111; color: #fff; font-weight: bold; font-size: 14px; display: flex; align-items: center; justify-content: center;
+    content: "!"; position: absolute; left: 18px; top: 18px; width: 24px; height: 24px; border-radius: 50%;
+    background: #111; color: #fff; font-weight: bold; font-size: 15px; display: flex; align-items: center; justify-content: center;
   }
   .aviso strong { display: block; margin-bottom: 6px; }
-  .aviso ul { margin: 0; padding-left: 16px; }
+  .aviso ul { margin: 0; padding-left: 18px; }
   .aviso li { margin-bottom: 4px; }
   .rodape-contato {
-    margin-top: 24px; padding-top: 12px; border-top: 1px solid var(--borda); font-size: 11.5px; color: #777; text-align: center;
+    margin-top: 28px; padding-top: 14px; border-top: 1px solid var(--borda); font-size: 12px; color: #777; text-align: center;
   }
-  .rodape-contato strong { font-family: 'Alata', 'Segoe UI', Arial, sans-serif; color: var(--preto); font-size: 13px; }
+  .rodape-contato strong { font-family: 'Alata', 'Segoe UI', Arial, sans-serif; color: var(--preto); font-size: 14px; }
 
   .acoes-cobranca { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
   .acoes-cobranca button { flex: 1; min-width: 140px; padding: 12px; }
@@ -368,9 +370,9 @@
       </div>
 
       <table class="itens">
-        <thead><tr><th>Item</th><th>Qtd</th><th>Val. Uni</th><th>Val. Total</th></tr></thead>
+        <thead><tr><th>Item</th><th>Qtd</th><th>Data</th><th>Horário</th><th>Val. UNI</th><th>Val. Total</th></tr></thead>
         <tbody id="itensCobranca"></tbody>
-        <tfoot><tr class="total-linha"><td colspan="3">Total</td><td id="totalCobranca">R$ 0,00</td></tr></tfoot>
+        <tfoot><tr class="total-linha"><td colspan="5">Total</td><td id="totalCobranca">R$ 0,00</td></tr></tfoot>
       </table>
 
       <div class="corpo">
@@ -403,7 +405,7 @@
       <button class="btn-whatsapp" onclick="abrirWhatsapp()">Abrir WhatsApp</button>
     </div>
     <button class="btn-primaria" onclick="confirmarCobranca()">Marcar como cobrado</button>
-    <button class="btn-fechar" onclick="fecharModal('overlayCobranca')">Fechar sem marcar</button>
+    <button class="btn-fechar" onclick="fecharCobranca()">Fechar sem marcar</button>
   </div>
 </div>
 
@@ -417,6 +419,7 @@ let bootstrap = { produtos: [], condominios: [], pessoas: [] };
 let todasOcorrencias = [];
 let ocorrenciaEmEdicaoId = null;
 let itensEdicao = []; // [{ produto, qtd, preco_unit }] da ocorrência em edição
+const TITULO_PADRAO_ = document.title; // restaurado ao fechar a notificação (que troca o título pro nome do PDF)
 
 // ===================== API =====================
 async function chamarApi(params, metodo) {
@@ -772,11 +775,16 @@ function abrirCobranca(id) {
   document.getElementById('saudacaoCobranca').textContent = 'Prezado(a) ' + nomePessoa + ',';
 
   const [ano, mes, dia] = o.data_ocorrencia.split('-');
-  document.getElementById('refLinha').textContent = 'Condomínio: ' + nomeCondominio + ' · Nº: ' + dia + mes + ano.slice(2);
+  const referencia = dia + mes + ano.slice(2);
+  document.getElementById('refLinha').textContent = 'Condomínio: ' + nomeCondominio + ' · Nº: ' + referencia;
+
+  // Mesmo padrão de nome de arquivo do gerador-cobranca.html: o título da aba
+  // vira o nome sugerido ao salvar como PDF (Ctrl+P > Salvar como PDF).
+  document.title = ('NOTIFICAÇÃO ' + referencia + ' ' + nomePessoa + ' - ' + o.condominio).toUpperCase();
 
   const corpoTabela = document.getElementById('itensCobranca');
   corpoTabela.innerHTML = o.itens.map(function (item) {
-    return '<tr><td>' + item.produto + '</td><td>' + item.qtd + '</td><td>' + formatarMoeda(item.preco_unit) + '</td><td>' + formatarMoeda(item.qtd * item.preco_unit) + '</td></tr>';
+    return '<tr><td>' + item.produto + '</td><td>' + item.qtd + '</td><td>' + formatarDataBR(o.data_ocorrencia) + '</td><td>' + (o.hora || '—') + '</td><td>' + formatarMoeda(item.preco_unit) + '</td><td>' + formatarMoeda(item.qtd * item.preco_unit) + '</td></tr>';
   }).join('');
   document.getElementById('totalCobranca').textContent = formatarMoeda(o.valor_total);
 
@@ -823,6 +831,11 @@ function recobrarWhatsapp(id) {
   window.open('https://wa.me/' + numero + '?text=' + encodeURIComponent(mensagem), '_blank');
 }
 
+function fecharCobranca() {
+  document.title = TITULO_PADRAO_;
+  fecharModal('overlayCobranca');
+}
+
 async function confirmarCobranca() {
   const banner = document.getElementById('bannerCobranca');
   try {
@@ -830,7 +843,7 @@ async function confirmarCobranca() {
     if (!resposta.ok) throw new Error(resposta.erro);
     const o = buscarOcorrencia(ocorrenciaEmEdicaoId);
     o.status = 'Cobrado'; o.data_cobranca = hojeISO();
-    fecharModal('overlayCobranca');
+    fecharCobranca();
     renderizarTotais();
     renderizarLista();
   } catch (err) {
