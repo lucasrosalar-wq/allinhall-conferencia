@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Conferência — All in Hall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Alata&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /*
+    IMPORTANTE: troque a URL abaixo pela URL do seu Web App do Apps Script
+    depois de publicar (veja o GUIA-CONFIGURACAO.md).
+  */
+  :root {
+    --preto: #111;
+    --cinza: #f4f4f4;
+    --borda: #ddd;
+    --amarelo: #f5b400;
+    --creme: #f5f0e6;
+    --laranja: #f2803c;
+    --verde: #3fa34d;
+    --azul: #4a90d9;
+    --vermelho: #c0392b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    background: var(--creme);
+    color: var(--preto);
+    padding-bottom: 40px;
+  }
+  h1, h2, h3 {
+    font-family: 'Alata', 'Segoe UI', Arial, sans-serif;
+    font-weight: normal;
+    margin: 0;
+  }
+  header {
+    background: var(--preto);
+    color: #fff;
+    padding: 16px 16px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 20;
+  }
+  header h1 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+  header h1::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--laranja); }
+
+  .container { max-width: 480px; margin: 0 auto; padding: 14px; }
+
+  select, input, textarea, button {
+    font-family: inherit;
+    font-size: 15px;
+  }
+  select, input, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    background: #fff;
+  }
+  label { display: block; font-size: 12px; color: #555; margin: 12px 0 4px; text-transform: uppercase; letter-spacing: .3px; }
+
+  button { cursor: pointer; border: none; border-radius: 8px; font-weight: 600; }
+
+  .btn-primaria {
+    background: var(--laranja); color: #fff; padding: 14px; width: 100%; font-size: 16px; margin-top: 14px;
+  }
+  .btn-primaria:active { background: #de6f2e; }
+  .btn-primaria:disabled { background: #ccc; }
+  .btn-secundaria {
+    background: var(--cinza); color: var(--preto); padding: 14px; width: 100%; font-size: 15px; margin-top: 10px;
+  }
+  .btn-perigo { background: var(--vermelho); color: #fff; }
+  .btn-fechar {
+    background: none; border: 1px solid var(--borda); color: #777; padding: 10px; width: 100%; margin-top: 10px;
+  }
+
+  /* Tela de PIN */
+  #telaPin { max-width: 320px; margin: 60px auto; text-align: center; }
+  #telaPin input { text-align: center; font-size: 22px; letter-spacing: 4px; }
+  #erroPin { color: var(--vermelho); font-size: 13px; margin-top: 8px; min-height: 18px; }
+
+  /* Navegação do mês */
+  .nav-mes {
+    display: flex; align-items: center; justify-content: space-between; margin: 14px 0 6px;
+  }
+  .nav-mes button { background: #fff; border: 1px solid var(--borda); width: 40px; height: 40px; font-size: 18px; }
+  .nav-mes .titulo-mes { font-size: 16px; font-weight: 600; text-transform: capitalize; }
+
+  /* Calendário */
+  .grade-semana, .grade-dias {
+    display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;
+  }
+  .grade-semana div { text-align: center; font-size: 10px; color: #888; text-transform: uppercase; padding: 4px 0; }
+  .dia {
+    position: relative; aspect-ratio: 1; border-radius: 8px; border: none; display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 600; background: #e2e2e2; color: #999;
+  }
+  .dia.vazio { background: transparent; }
+  .dia.ok { background: var(--verde); color: #fff; }
+  .dia.ocorrencia { background: var(--amarelo); color: #111; }
+  .dia.semoperacao { background: var(--azul); color: #fff; }
+  .dia.hoje { outline: 2px solid var(--preto); outline-offset: 2px; }
+  .dia.selecionado::after {
+    content: ''; position: absolute; top: 3px; right: 3px; width: 7px; height: 7px;
+    border-radius: 50%; background: var(--laranja); box-shadow: 0 0 0 1.5px #fff;
+  }
+
+  .legenda { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; font-size: 11px; color: #555; }
+  .legenda span { display: inline-flex; align-items: center; gap: 4px; }
+  .bolinha { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* Painel de ações do dia selecionado (fica entre o calendário e a relação) */
+  .painel-acoes-dia {
+    margin-top: 16px; background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .painel-acoes-dia h3 { font-size: 16px; margin-bottom: 2px; }
+  .painel-acoes-dia .subtitulo { font-size: 12px; color: #888; margin-bottom: 4px; }
+
+  /* Relação de ocorrências do dia selecionado */
+  .relacao-dia { margin-top: 20px; }
+  .relacao-dia h3 { font-size: 14px; margin-bottom: 8px; }
+  .card-relacao {
+    background: #fff; border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.08);
+  }
+  .card-relacao .topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+  .card-relacao .pessoa { font-weight: 600; font-size: 14px; }
+  .card-relacao .hora { font-size: 12px; color: #777; }
+  .card-relacao .valor { font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .card-relacao .itens { font-size: 12px; color: #666; margin-top: 4px; }
+  .badge-status {
+    display: inline-block; margin-top: 6px; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; color: #fff; text-transform: uppercase;
+  }
+  .badge-status.pendente { background: #888; }
+  .badge-status.identificado { background: var(--amarelo); color: #111; }
+  .badge-status.cobrado { background: #c0392b; }
+  .badge-status.pago { background: var(--verde); }
+  .vazio-relacao { font-size: 12px; color: #999; padding: 6px 0; }
+
+  .acoes-relacao { display: flex; gap: 8px; margin-top: 10px; }
+  .acoes-relacao button {
+    flex: 1; padding: 8px; font-size: 12.5px; background: var(--cinza); border-radius: 6px; font-weight: 600;
+  }
+  .acoes-relacao button.btn-excluir-relacao { background: none; color: #b33; border: 1px solid #b33; }
+
+  /* Modal */
+  .overlay {
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 50;
+    align-items: flex-end; justify-content: center;
+  }
+  .overlay.aberto { display: flex; }
+  .folha {
+    background: #fff; width: 100%; max-width: 480px; border-radius: 16px 16px 0 0; padding: 20px;
+    max-height: 88vh; overflow-y: auto;
+  }
+  .folha h2 { font-size: 18px; margin-bottom: 4px; }
+  .folha .subtitulo { font-size: 12px; color: #888; margin-bottom: 14px; }
+
+  .linha-add-item { display: flex; gap: 6px; margin-top: 4px; }
+  .linha-add-item input[type="text"] { flex: 1; }
+  .linha-add-item input[type="number"] { width: 56px; text-align: center; padding: 10px 4px; }
+  .linha-add-item button {
+    width: 44px; flex-shrink: 0; background: var(--laranja); color: #fff; font-size: 20px; padding: 0; border-radius: 8px;
+  }
+
+  .item-adicionado {
+    display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--cinza);
+  }
+  .item-adicionado .info { font-size: 13px; }
+  .item-adicionado .qtd-preco { font-size: 11px; color: #888; }
+  .item-adicionado .direita { display: flex; align-items: center; gap: 10px; }
+  .item-adicionado .subtotal { font-size: 13px; font-weight: 600; }
+  .item-adicionado .btn-remover { background: none; color: #b33; font-size: 18px; padding: 0 2px; }
+  .lista-vazia-itens { font-size: 12px; color: #999; padding: 8px 0; }
+
+  .total-box {
+    background: var(--preto); color: #fff; border-radius: 10px; padding: 14px; margin-top: 14px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 15px;
+  }
+  .total-box strong { font-size: 20px; }
+
+  .banner {
+    padding: 10px 12px; border-radius: 8px; font-size: 13px; margin-top: 10px; display: none;
+  }
+  .banner.erro { background: #fdecea; color: var(--vermelho); display: block; }
+  .banner.sucesso { background: #eafaf0; color: var(--verde); display: block; }
+
+  .oculto { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- Tela de PIN: bloqueia o acesso até validar com o backend -->
+<div id="telaPin">
+  <h1 style="font-size:22px; margin-bottom:6px;">Conferência</h1>
+  <p style="color:#666; font-size:13px;">All in Hall — digite o PIN de acesso</p>
+  <input id="inputPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
+  <button class="btn-primaria" onclick="validarPin()">Entrar</button>
+  <div id="erroPin"></div>
+</div>
+
+<div id="app" class="oculto">
+  <header>
+    <h1>Conferência — All in Hall</h1>
+  </header>
+
+  <div class="container">
+    <label>Condomínio</label>
+    <select id="selectCondominio" onchange="mudarCondominio()"></select>
+
+    <div class="nav-mes">
+      <button onclick="mudarMes(-1)">‹</button>
+      <div class="titulo-mes" id="tituloMes">—</div>
+      <button onclick="mudarMes(1)">›</button>
+    </div>
+
+    <div class="grade-semana">
+      <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+    </div>
+    <div class="grade-dias" id="gradeDias"></div>
+
+    <div class="legenda">
+      <span><span class="bolinha" style="background:var(--verde)"></span> Fechado OK</span>
+      <span><span class="bolinha" style="background:var(--amarelo)"></span> Ocorrência</span>
+      <span><span class="bolinha" style="background:var(--azul)"></span> Sem operação</span>
+      <span><span class="bolinha" style="background:#e2e2e2"></span> Não conferido</span>
+    </div>
+
+    <div id="bannerCarregamento" class="banner"></div>
+
+    <div id="painelAcoesDia" class="painel-acoes-dia oculto">
+      <h3 id="tituloDiaSelecionado">Dia —</h3>
+      <div class="subtitulo" id="condominioDiaSelecionado">—</div>
+      <button class="btn-primaria" onclick="abrirFormularioOcorrencia()">Registrar ocorrência</button>
+      <button class="btn-secundaria" onclick="fecharDiaComoOk()">Fechar dia (OK)</button>
+      <button class="btn-secundaria" onclick="marcarSemOperacao()">Marcar sem operação</button>
+    </div>
+
+    <div id="relacaoDia" class="relacao-dia oculto">
+      <h3 id="tituloRelacaoDia">Ocorrências —</h3>
+      <div id="listaRelacaoDia"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: formulário de ocorrência -->
+<div class="overlay" id="overlayOcorrencia">
+  <div class="folha">
+    <h2 id="tituloFormularioOcorrencia">Registrar ocorrência</h2>
+    <div class="subtitulo" id="subtituloOcorrencia">—</div>
+
+    <label>Hora da ocorrência</label>
+    <input type="time" id="inputHora">
+
+    <label>Nome da pessoa (se souber — deixe em branco se não souber)</label>
+    <input type="text" id="inputPessoaNome" placeholder="Nome da pessoa">
+
+    <label>WhatsApp da pessoa (com DDD, se souber)</label>
+    <input type="text" id="inputPessoaWhatsapp" placeholder="Ex: 41999998888">
+
+    <label>Descrição da pessoa (opcional)</label>
+    <textarea id="inputDescricaoPessoa" rows="2" placeholder="Ex: mulher de casaco preto, saiu pro bloco B"></textarea>
+
+    <label>Itens retirados</label>
+    <div class="linha-add-item">
+      <input type="text" id="inputProdutoNovo" list="listaProdutosDatalist" placeholder="Digite o produto...">
+      <input type="number" id="inputQtdNovo" min="1" step="1" value="1">
+      <button type="button" onclick="adicionarItemNaLista()">+</button>
+    </div>
+    <datalist id="listaProdutosDatalist"></datalist>
+    <div id="listaItensAdicionados"></div>
+
+    <div class="total-box">
+      <span>Total</span>
+      <strong id="totalOcorrencia">R$ 0,00</strong>
+    </div>
+
+    <label>Observação</label>
+    <textarea id="inputObservacao" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
+
+    <div id="bannerOcorrencia" class="banner"></div>
+
+    <button class="btn-primaria" id="botaoSalvarOcorrencia" onclick="salvarOcorrencia()">Salvar ocorrência</button>
+    <button class="btn-fechar" onclick="fecharModal('overlayOcorrencia')">Cancelar</button>
+  </div>
+</div>
+
+<script>
+// ===================== CONFIGURAÇÃO =====================
+const URL_WEBAPP = 'https://script.google.com/macros/s/AKfycbz0RF9foxslKzWANlDHV5pbDv8lgxmgPxPzlEXBbPmFUZeTYDeH8WlX1RcpFQLiFK0m/exec';
+
+// ===================== ESTADO EM MEMÓRIA (sem localStorage/sessionStorage) =====================
+let pin = '';
+let bootstrap = { produtos: [], condominios: [], pessoas: [] };
+let mesAtual = new Date().getMonth() + 1;
+let anoAtual = new Date().getFullYear();
+let condominioAtual = '';
+let dadosCalendario = { ocorrencias: [], diasFechados: [] };
+let diaSelecionado = null; // 'yyyy-mm-dd'
+let itensAdicionados = []; // [{ produto, qtd, preco_unit }] da ocorrência em edição
+let ultimoPayloadFalhou = null; // guarda a última tentativa de salvar ocorrência para permitir reenvio
+let ocorrenciaEmEdicaoId = null; // id da ocorrência sendo corrigida, ou null quando é um registro novo
+
+// ===================== CHAMADAS À API =====================
+async function chamarApi(params, metodo) {
+  metodo = metodo || 'GET';
+  const comPin = Object.assign({ pin: pin }, params);
+
+  if (metodo === 'GET') {
+    const query = new URLSearchParams(comPin).toString();
+    const resp = await fetch(URL_WEBAPP + '?' + query, { method: 'GET', redirect: 'follow' });
+    return resp.json();
+  }
+
+  // POST: usa text/plain para evitar preflight CORS (Apps Script não trata OPTIONS).
+  const resp = await fetch(URL_WEBAPP, {
+    method: 'POST',
+    redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(comPin)
+  });
+  return resp.json();
+}
+
+// ===================== PIN =====================
+async function validarPin() {
+  const valor = document.getElementById('inputPin').value.trim();
+  if (!valor) return;
+  document.getElementById('erroPin').textContent = '';
+  pin = valor;
+  try {
+    const resposta = await chamarApi({ action: 'bootstrap' });
+    if (!resposta.ok) {
+      document.getElementById('erroPin').textContent = resposta.erro || 'PIN inválido.';
+      pin = '';
+      return;
+    }
+    bootstrap = resposta.dados;
+    document.getElementById('telaPin').classList.add('oculto');
+    document.getElementById('app').classList.remove('oculto');
+    inicializarApp();
+  } catch (err) {
+    document.getElementById('erroPin').textContent = 'Falha de conexão. Verifique a internet e tente novamente.';
+  }
+}
+
+// ===================== INICIALIZAÇÃO =====================
+function inicializarApp() {
+  const select = document.getElementById('selectCondominio');
+  select.innerHTML = bootstrap.condominios.map(function (c) {
+    return '<option value="' + c.nome_curto + '">' + c.nome_curto + '</option>';
+  }).join('');
+  condominioAtual = bootstrap.condominios[0] ? bootstrap.condominios[0].nome_curto : '';
+
+  const datalistProdutos = document.getElementById('listaProdutosDatalist');
+  datalistProdutos.innerHTML = bootstrap.produtos.map(function (p) { return '<option value="' + p.nome + '">'; }).join('');
+
+  carregarCalendario();
+}
+
+function mudarCondominio() {
+  condominioAtual = document.getElementById('selectCondominio').value;
+  carregarCalendario();
+}
+
+function mudarMes(delta) {
+  mesAtual += delta;
+  if (mesAtual > 12) { mesAtual = 1; anoAtual++; }
+  if (mesAtual < 1) { mesAtual = 12; anoAtual--; }
+  carregarCalendario();
+}
+
+// ===================== CALENDÁRIO =====================
+const NOMES_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+async function carregarCalendario() {
+  document.getElementById('tituloMes').textContent = NOMES_MESES[mesAtual - 1] + ' de ' + anoAtual;
+  const banner = document.getElementById('bannerCarregamento');
+  banner.className = 'banner';
+  banner.textContent = '';
+
+  try {
+    const resposta = await chamarApi({ action: 'calendario', condominio: condominioAtual, ano: anoAtual, mes: mesAtual });
+    if (!resposta.ok) throw new Error(resposta.erro);
+    dadosCalendario = resposta.dados;
+    renderizarCalendario();
+  } catch (err) {
+    banner.className = 'banner erro';
+    banner.textContent = 'Não foi possível carregar o calendário. Verifique a conexão e tente novamente.';
+  }
+}
+
+function renderizarCalendario() {
+  const grade = document.getElementById('gradeDias');
+  grade.innerHTML = '';
+
+  const primeiroDiaSemana = new Date(anoAtual, mesAtual - 1, 1).getDay();
+  const diasNoMes = new Date(anoAtual, mesAtual, 0).getDate();
+  const hojeISO = formatarISO(new Date());
+
+  const mapaOcorrencias = {};
+  dadosCalendario.ocorrencias.forEach(function (o) {
+    mapaOcorrencias[o.data_ocorrencia] = true;
+  });
+  const mapaFechados = {};
+  dadosCalendario.diasFechados.forEach(function (d) {
+    mapaFechados[d.data] = d.status_dia;
+  });
+
+  for (let i = 0; i < primeiroDiaSemana; i++) {
+    const vazio = document.createElement('div');
+    vazio.className = 'dia vazio';
+    grade.appendChild(vazio);
+  }
+
+  for (let dia = 1; dia <= diasNoMes; dia++) {
+    const dataISO = anoAtual + '-' + String(mesAtual).padStart(2, '0') + '-' + String(dia).padStart(2, '0');
+    const botao = document.createElement('button');
+    botao.className = 'dia';
+    botao.textContent = dia;
+    botao.dataset.iso = dataISO;
+
+    if (mapaOcorrencias[dataISO]) {
+      botao.classList.add('ocorrencia');
+    } else if (mapaFechados[dataISO] === 'Sem operacao') {
+      botao.classList.add('semoperacao');
+    } else if (mapaFechados[dataISO] === 'OK') {
+      botao.classList.add('ok');
+    }
+    if (dataISO === hojeISO) botao.classList.add('hoje');
+    if (dataISO === diaSelecionado) botao.classList.add('selecionado');
+
+    botao.onclick = function () { abrirAcoesDia(dataISO, dia); };
+    grade.appendChild(botao);
+  }
+}
+
+function formatarISO(data) {
+  return data.getFullYear() + '-' + String(data.getMonth() + 1).padStart(2, '0') + '-' + String(data.getDate()).padStart(2, '0');
+}
+
+function formatarDataBR(iso) {
+  const [ano, mes, dia] = iso.split('-');
+  return dia + '/' + mes + '/' + ano;
+}
+
+// ===================== PAINEL: AÇÕES DO DIA =====================
+function abrirAcoesDia(dataISO, dia) {
+  diaSelecionado = dataISO;
+
+  document.querySelectorAll('.dia.selecionado').forEach(function (el) { el.classList.remove('selecionado'); });
+  const botaoAtual = document.querySelector('.dia[data-iso="' + dataISO + '"]');
+  if (botaoAtual) botaoAtual.classList.add('selecionado');
+
+  document.getElementById('tituloDiaSelecionado').textContent = 'Dia ' + formatarDataBR(dataISO);
+  document.getElementById('condominioDiaSelecionado').textContent = condominioAtual;
+  document.getElementById('painelAcoesDia').classList.remove('oculto');
+  renderizarRelacaoDia(dataISO);
+}
+
+// Mostra, abaixo do calendário, a relação de ocorrências já registradas no dia tocado.
+function renderizarRelacaoDia(dataISO) {
+  const container = document.getElementById('relacaoDia');
+  const titulo = document.getElementById('tituloRelacaoDia');
+  const lista = document.getElementById('listaRelacaoDia');
+
+  titulo.textContent = 'Ocorrências em ' + formatarDataBR(dataISO);
+
+  const ocorrenciasDoDia = dadosCalendario.ocorrencias.filter(function (o) { return o.data_ocorrencia === dataISO; });
+
+  if (ocorrenciasDoDia.length === 0) {
+    lista.innerHTML = '<div class="vazio-relacao">Nenhuma ocorrência registrada neste dia.</div>';
+  } else {
+    lista.innerHTML = ocorrenciasDoDia.map(function (o) {
+      const nomePessoa = o.pessoa || o.descricao_pessoa || 'Desconhecido(a)';
+      const resumoItens = o.itens.map(function (item) { return item.qtd + 'x ' + item.produto; }).join(', ');
+      return '<div class="card-relacao">' +
+        '<div class="topo">' +
+          '<div><div class="pessoa">' + nomePessoa + '</div><div class="hora">' + (o.hora || '—') + '</div></div>' +
+          '<div class="valor">' + formatarMoeda(o.valor_total) + '</div>' +
+        '</div>' +
+        '<div class="itens">' + resumoItens + '</div>' +
+        '<span class="badge-status ' + o.status.toLowerCase() + '">' + o.status + '</span>' +
+        '<div class="acoes-relacao">' +
+          '<button type="button" onclick="editarOcorrenciaDoDia(\'' + o.id + '\')">Editar</button>' +
+          '<button type="button" class="btn-excluir-relacao" onclick="excluirOcorrenciaDoDia(\'' + o.id + '\')">Excluir</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  container.classList.remove('oculto');
+}
+
+function abrirModal(id) { document.getElementById(id).classList.add('aberto'); }
+function fecharModal(id) { document.getElementById(id).classList.remove('aberto'); }
+
+async function fecharDiaComoOk() {
+  await enviarFechamentoDia('OK');
+}
+
+async function marcarSemOperacao() {
+  await enviarFechamentoDia('Sem operacao');
+}
+
+async function enviarFechamentoDia(status) {
+  try {
+    const resposta = await chamarApi({ action: 'fecharDia', condominio: condominioAtual, data: diaSelecionado, status_dia: status }, 'POST');
+    if (!resposta.ok) throw new Error(resposta.erro);
+    await carregarCalendario();
+    renderizarRelacaoDia(diaSelecionado);
+  } catch (err) {
+    alert('Não foi possível salvar. Verifique a conexão e tente novamente.');
+  }
+}
+
+// ===================== MODAL: FORMULÁRIO DE OCORRÊNCIA =====================
+// Sem argumento: registra uma ocorrência nova. Com "ocorrencia": reabre para corrigir uma já salva.
+function abrirFormularioOcorrencia(ocorrencia) {
+  ocorrenciaEmEdicaoId = ocorrencia ? ocorrencia.id : null;
+  document.getElementById('tituloFormularioOcorrencia').textContent = ocorrencia ? 'Editar ocorrência' : 'Registrar ocorrência';
+  document.getElementById('subtituloOcorrencia').textContent = condominioAtual + ' — ' + formatarDataBR(diaSelecionado);
+
+  if (ocorrencia) {
+    document.getElementById('inputHora').value = ocorrencia.hora || '';
+    document.getElementById('inputPessoaNome').value = ocorrencia.pessoa || '';
+    document.getElementById('inputPessoaWhatsapp').value = ocorrencia.contato_whatsapp || '';
+    document.getElementById('inputDescricaoPessoa').value = ocorrencia.descricao_pessoa || '';
+    document.getElementById('inputObservacao').value = ocorrencia.observacao || '';
+    itensAdicionados = ocorrencia.itens.map(function (item) { return Object.assign({}, item); });
+  } else {
+    const agora = new Date();
+    document.getElementById('inputHora').value = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
+    document.getElementById('inputPessoaNome').value = '';
+    document.getElementById('inputPessoaWhatsapp').value = '';
+    document.getElementById('inputDescricaoPessoa').value = '';
+    document.getElementById('inputObservacao').value = '';
+    itensAdicionados = [];
+  }
+
+  document.getElementById('inputProdutoNovo').value = '';
+  document.getElementById('inputQtdNovo').value = '1';
+  document.getElementById('bannerOcorrencia').className = 'banner';
+  document.getElementById('bannerOcorrencia').textContent = '';
+  renderizarItensAdicionados();
+  abrirModal('overlayOcorrencia');
+}
+
+function editarOcorrenciaDoDia(id) {
+  const ocorrencia = dadosCalendario.ocorrencias.find(function (o) { return o.id === id; });
+  if (ocorrencia) abrirFormularioOcorrencia(ocorrencia);
+}
+
+async function excluirOcorrenciaDoDia(id) {
+  if (!confirm('Excluir esta ocorrência? Essa ação não pode ser desfeita.')) return;
+  try {
+    const resposta = await chamarApi({ action: 'excluirOcorrencia', id: id }, 'POST');
+    if (!resposta.ok) throw new Error(resposta.erro);
+    await carregarCalendario();
+    renderizarRelacaoDia(diaSelecionado);
+  } catch (err) {
+    alert('Não foi possível excluir. Verifique a conexão e tente novamente.');
+  }
+}
+
+// Aceita nome exato (selecionado da lista) ou parte do nome digitada livremente.
+function encontrarProduto_(nomeDigitado) {
+  const alvo = nomeDigitado.toLowerCase();
+  const exato = bootstrap.produtos.find(function (p) { return p.nome.toLowerCase() === alvo; });
+  if (exato) return exato;
+  return bootstrap.produtos.find(function (p) { return p.nome.toLowerCase().indexOf(alvo) !== -1; });
+}
+
+function adicionarItemNaLista() {
+  const inputNome = document.getElementById('inputProdutoNovo');
+  const inputQtd = document.getElementById('inputQtdNovo');
+  const nomeDigitado = inputNome.value.trim();
+
+  const produto = encontrarProduto_(nomeDigitado);
+  if (!produto) {
+    alert('Produto não encontrado. Digite parte do nome e escolha uma das opções sugeridas.');
+    return;
+  }
+  const qtd = Math.max(1, parseInt(inputQtd.value, 10) || 1);
+
+  const existente = itensAdicionados.find(function (i) { return i.produto === produto.nome; });
+  if (existente) existente.qtd += qtd;
+  else itensAdicionados.push({ produto: produto.nome, qtd: qtd, preco_unit: produto.preco });
+
+  inputNome.value = '';
+  inputQtd.value = '1';
+  inputNome.focus();
+  renderizarItensAdicionados();
+}
+
+function removerItemDaLista(indice) {
+  itensAdicionados.splice(indice, 1);
+  renderizarItensAdicionados();
+}
+
+function renderizarItensAdicionados() {
+  const lista = document.getElementById('listaItensAdicionados');
+  lista.innerHTML = itensAdicionados.map(function (item, indice) {
+    const subtotal = item.qtd * item.preco_unit;
+    return '<div class="item-adicionado">' +
+      '<div class="info">' + item.produto + '<div class="qtd-preco">' + item.qtd + ' x ' + formatarMoeda(item.preco_unit) + '</div></div>' +
+      '<div class="direita">' +
+        '<span class="subtotal">' + formatarMoeda(subtotal) + '</span>' +
+        '<button type="button" class="btn-remover" onclick="removerItemDaLista(' + indice + ')">×</button>' +
+      '</div>' +
+    '</div>';
+  }).join('') || '<div class="lista-vazia-itens">Nenhum item adicionado ainda.</div>';
+
+  atualizarTotalOcorrencia();
+}
+
+function formatarMoeda(valor) {
+  return Number(valor).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
+
+function atualizarTotalOcorrencia() {
+  const total = itensAdicionados.reduce(function (soma, item) { return soma + item.qtd * item.preco_unit; }, 0);
+  document.getElementById('totalOcorrencia').textContent = formatarMoeda(total);
+  return total;
+}
+
+async function salvarOcorrencia() {
+  const itens = itensAdicionados;
+  if (itens.length === 0) {
+    mostrarBannerOcorrencia('erro', 'Adicione ao menos um item retirado.');
+    return;
+  }
+
+  const camposComuns = {
+    hora: document.getElementById('inputHora').value,
+    pessoa: document.getElementById('inputPessoaNome').value.trim(),
+    contato_whatsapp: document.getElementById('inputPessoaWhatsapp').value.trim(),
+    descricao_pessoa: document.getElementById('inputDescricaoPessoa').value,
+    itens: itens,
+    valor_total: atualizarTotalOcorrencia(),
+    observacao: document.getElementById('inputObservacao').value
+  };
+
+  const payload = ocorrenciaEmEdicaoId
+    ? Object.assign({ action: 'atualizarOcorrencia', id: ocorrenciaEmEdicaoId }, camposComuns)
+    : Object.assign({ action: 'criarOcorrencia', condominio: condominioAtual, data_ocorrencia: diaSelecionado }, camposComuns);
+
+  await enviarOcorrencia(payload);
+}
+
+async function enviarOcorrencia(payload) {
+  const botao = document.getElementById('botaoSalvarOcorrencia');
+  botao.disabled = true;
+  botao.textContent = 'Salvando...';
+  try {
+    const resposta = await chamarApi(payload, 'POST');
+    if (!resposta.ok) throw new Error(resposta.erro || 'Erro ao salvar.');
+    ultimoPayloadFalhou = null;
+    mostrarBannerOcorrencia('sucesso', 'Ocorrência salva com sucesso!');
+    setTimeout(async function () {
+      fecharModal('overlayOcorrencia');
+      await carregarCalendario();
+      renderizarRelacaoDia(diaSelecionado);
+    }, 700);
+  } catch (err) {
+    ultimoPayloadFalhou = payload;
+    mostrarBannerOcorrencia('erro', 'Falha ao salvar. Seus dados não foram perdidos — toque em "Salvar ocorrência" para tentar novamente.');
+  } finally {
+    botao.disabled = false;
+    botao.textContent = 'Salvar ocorrência';
+  }
+}
+
+function mostrarBannerOcorrencia(tipo, mensagem) {
+  const banner = document.getElementById('bannerOcorrencia');
+  banner.className = 'banner ' + tipo;
+  banner.textContent = mensagem;
+}
+
+// Se uma tentativa anterior falhou, reenviar o mesmo payload em vez de remontar o formulário.
+async function salvarOcorrenciaOuReenviar() {
+  if (ultimoPayloadFalhou) {
+    await enviarOcorrencia(ultimoPayloadFalhou);
+  } else {
+    await salvarOcorrencia();
+  }
+}
+document.getElementById('botaoSalvarOcorrencia').onclick = salvarOcorrenciaOuReenviar;
+</script>
+</body>
+</html>
