@@ -73,6 +73,13 @@
   @media (min-width: 1024px) { .btn-fechar-sidebar { display: none; } }
   .nav-sidebar { display: flex; flex-direction: column; gap: 4px; }
   .rodape-sidebar { margin-top: auto; padding: 0 6px; font-size: 11px; color: #9CA3AF; line-height: 1.5; }
+  .sidebar-info { padding: 4px 6px 0; border-top: 1px solid var(--borda); padding-top: 16px; margin-top: 4px; }
+  .sidebar-info-titulo { font-size: 10.5px; font-weight: 700; color: var(--texto-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 10px; }
+  .sidebar-info-item { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 10px; }
+  .sidebar-info-item .bolinha { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+  .sidebar-info-item strong { display: block; font-size: 11.5px; color: var(--preto); }
+  .sidebar-info-item span.texto { font-size: 11px; color: var(--texto-2); line-height: 1.4; }
+  .sidebar-info-nota { font-size: 10.5px; color: #9CA3AF; line-height: 1.45; padding-top: 4px; border-top: 1px dashed var(--borda); }
   .nav-item {
     display: flex; align-items: center; gap: 10px; padding: 11px 12px; border-radius: var(--raio-sm);
     color: var(--texto-2); font-size: 14px; font-weight: 600; text-decoration: none;
@@ -388,6 +395,22 @@
     <nav class="nav-sidebar">
       <a class="nav-item ativo" href="#"><i data-lucide="camera"></i> Conferência</a>
     </nav>
+    <div class="sidebar-info">
+      <div class="sidebar-info-titulo">Como funciona</div>
+      <div class="sidebar-info-item">
+        <span class="bolinha" style="background:var(--laranja)"></span>
+        <div><strong>Registrar ocorrência</strong><span class="texto">Consumo sem pagamento identificado.</span></div>
+      </div>
+      <div class="sidebar-info-item">
+        <span class="bolinha" style="background:var(--verde)"></span>
+        <div><strong>Fechar dia (OK)</strong><span class="texto">Dia revisado, sem problema — também marca até onde você já conferiu.</span></div>
+      </div>
+      <div class="sidebar-info-item">
+        <span class="bolinha" style="background:var(--azul)"></span>
+        <div><strong>Sem operação</strong><span class="texto">Loja não funcionou nesse dia.</span></div>
+      </div>
+      <div class="sidebar-info-nota">Se o dia tiver ocorrência, ele sempre aparece amarelo no calendário — mesmo já marcado como OK ou sem operação.</div>
+    </div>
     <div class="rodape-sidebar">All in Hall<br>Sistema interno</div>
   </aside>
   <div class="scrim-sidebar" id="scrimSidebar" onclick="toggleSidebar()"></div>
@@ -439,6 +462,7 @@
         <button class="btn-primaria btn-icone" onclick="abrirFormularioOcorrencia()"><i data-lucide="plus-circle"></i> Registrar ocorrência</button>
         <button class="btn-secundaria btn-icone" onclick="fecharDiaComoOk()"><i data-lucide="check-circle"></i> Fechar dia (OK)</button>
         <button class="btn-secundaria btn-icone" onclick="marcarSemOperacao()"><i data-lucide="ban"></i> Marcar sem operação</button>
+        <button class="btn-fechar btn-icone" onclick="limparDiaSelecionado()"><i data-lucide="eraser"></i> Limpar marcação do dia</button>
       </div>
 
       <div id="relacaoDia" class="relacao-dia oculto">
@@ -457,6 +481,9 @@
   <div class="folha">
     <h2 id="tituloFormularioOcorrencia">Registrar ocorrência</h2>
     <div class="subtitulo" id="subtituloOcorrencia">—</div>
+
+    <label>Data da ocorrência</label>
+    <input type="date" id="inputDataOcorrencia">
 
     <label>Hora da ocorrência</label>
     <input type="time" id="inputHora">
@@ -723,6 +750,20 @@ async function enviarFechamentoDia(status) {
   }
 }
 
+// Desfaz uma marcação errada de "Fechar dia (OK)" / "Marcar sem operação" — o dia
+// volta a ficar "Não conferido". Não mexe em ocorrências já registradas nesse dia.
+async function limparDiaSelecionado() {
+  if (!confirm('Limpar a marcação deste dia? Ele volta a aparecer como "Não conferido".')) return;
+  try {
+    const resposta = await chamarApi({ action: 'limparDia', condominio: condominioAtual, data: diaSelecionado }, 'POST');
+    if (!resposta.ok) throw new Error(resposta.erro);
+    await carregarCalendario();
+    renderizarRelacaoDia(diaSelecionado);
+  } catch (err) {
+    alert('Não foi possível limpar a marcação. Verifique a conexão e tente novamente.');
+  }
+}
+
 // ===================== MODAL: FORMULÁRIO DE OCORRÊNCIA =====================
 // Sem argumento: registra uma ocorrência nova. Com "ocorrencia": reabre para corrigir uma já salva.
 function abrirFormularioOcorrencia(ocorrencia) {
@@ -731,6 +772,7 @@ function abrirFormularioOcorrencia(ocorrencia) {
   document.getElementById('subtituloOcorrencia').textContent = condominioAtual + ' — ' + formatarDataBR(diaSelecionado);
 
   if (ocorrencia) {
+    document.getElementById('inputDataOcorrencia').value = ocorrencia.data_ocorrencia || diaSelecionado;
     document.getElementById('inputHora').value = ocorrencia.hora || '';
     document.getElementById('inputPessoaNome').value = ocorrencia.pessoa || '';
     document.getElementById('inputPessoaWhatsapp').value = ocorrencia.contato_whatsapp || '';
@@ -739,6 +781,7 @@ function abrirFormularioOcorrencia(ocorrencia) {
     itensAdicionados = ocorrencia.itens.map(function (item) { return Object.assign({}, item); });
   } else {
     const agora = new Date();
+    document.getElementById('inputDataOcorrencia').value = diaSelecionado;
     document.getElementById('inputHora').value = String(agora.getHours()).padStart(2, '0') + ':' + String(agora.getMinutes()).padStart(2, '0');
     document.getElementById('inputPessoaNome').value = '';
     document.getElementById('inputPessoaWhatsapp').value = '';
@@ -841,6 +884,7 @@ async function salvarOcorrencia() {
   }
 
   const camposComuns = {
+    data_ocorrencia: document.getElementById('inputDataOcorrencia').value || diaSelecionado,
     hora: document.getElementById('inputHora').value,
     pessoa: document.getElementById('inputPessoaNome').value.trim(),
     contato_whatsapp: document.getElementById('inputPessoaWhatsapp').value.trim(),
@@ -852,7 +896,7 @@ async function salvarOcorrencia() {
 
   const payload = ocorrenciaEmEdicaoId
     ? Object.assign({ action: 'atualizarOcorrencia', id: ocorrenciaEmEdicaoId }, camposComuns)
-    : Object.assign({ action: 'criarOcorrencia', condominio: condominioAtual, data_ocorrencia: diaSelecionado }, camposComuns);
+    : Object.assign({ action: 'criarOcorrencia', condominio: condominioAtual }, camposComuns);
 
   await enviarOcorrencia(payload);
 }
