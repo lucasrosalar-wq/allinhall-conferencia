@@ -687,9 +687,9 @@
       </div>
 
       <table class="itens">
-        <thead><tr><th>Data</th><th>Horário</th><th>Itens</th><th>Valor</th></tr></thead>
+        <thead><tr><th>Item</th><th>Qtd</th><th>Data</th><th>Horário</th><th>Val. UNI</th><th>Val. Total</th></tr></thead>
         <tbody id="itensConsolidados"></tbody>
-        <tfoot><tr class="total-linha"><td colspan="3">Total geral</td><td id="totalConsolidado">R$ 0,00</td></tr></tfoot>
+        <tfoot><tr class="total-linha"><td colspan="5">Total geral</td><td id="totalConsolidado">R$ 0,00</td></tr></tfoot>
       </table>
 
       <div class="corpo">
@@ -1286,10 +1286,13 @@ function abrirCobrancaConsolidada(grupoId) {
   document.title = ('EXTRATO ' + hojeISO().split('-').reverse().join('') + ' ' + nomePessoa + ' - ' + grupo.condominio).toUpperCase();
 
   const corpoTabela = document.getElementById('itensConsolidados');
-  corpoTabela.innerHTML = selecionadas.map(function (o) {
-    const resumoItens = o.itens.map(function (i) { return i.qtd + 'x ' + i.produto; }).join('<br>');
-    return '<tr><td>' + formatarDataBR(o.data_ocorrencia) + '</td><td>' + (o.hora || '—') + '</td><td>' + resumoItens + '</td><td>' + formatarMoeda(o.valor_total) + '</td></tr>';
-  }).join('');
+  const linhas = [];
+  selecionadas.forEach(function (o) {
+    o.itens.forEach(function (item) {
+      linhas.push('<tr><td>' + item.produto + '</td><td>' + item.qtd + '</td><td>' + formatarDataBR(o.data_ocorrencia) + '</td><td>' + (o.hora || '—') + '</td><td>' + formatarMoeda(item.preco_unit) + '</td><td>' + formatarMoeda(item.qtd * item.preco_unit) + '</td></tr>');
+    });
+  });
+  corpoTabela.innerHTML = linhas.join('');
   document.getElementById('totalConsolidado').textContent = formatarMoeda(totalGeral);
 
   document.getElementById('bannerCobrancaConsolidada').className = 'banner';
