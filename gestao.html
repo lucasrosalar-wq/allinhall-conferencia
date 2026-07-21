@@ -420,12 +420,13 @@
   @media print {
     body { background: #fff; }
     body * { visibility: hidden; }
-    #invoiceParaImprimir, #invoiceParaImprimir *,
-    #invoiceConsolidadoParaImprimir, #invoiceConsolidadoParaImprimir * { visibility: visible; }
-    #invoiceParaImprimir, #invoiceConsolidadoParaImprimir {
+    .overlay.aberto .invoice-wrap, .overlay.aberto .invoice-wrap * { visibility: visible; }
+    .overlay.aberto .invoice-wrap {
       position: absolute; top: 0; left: 0; width: 100%; padding: 0; max-width: none;
       box-shadow: none; border-radius: 0; margin: 0;
     }
+    table.itens tr, .aviso, .rodape-contato { page-break-inside: avoid; }
+    .ref-linha, .invoice-top { page-break-after: avoid; }
   }
 </style>
 </head>
