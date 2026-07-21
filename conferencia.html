@@ -219,8 +219,13 @@
   }
   #telaPin .icone-pin svg { width: 26px; height: 26px; }
   #telaPin h1 { font-size: 20px; }
-  #telaPin input { text-align: center; font-size: 22px; letter-spacing: 6px; }
+  #telaPin input { text-align: center; font-size: 24px; letter-spacing: .5em; text-indent: .5em; }
   #erroPin { color: var(--vermelho); font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .pin-rodape {
+    display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 18px;
+    font-size: 11.5px; color: #9CA3AF;
+  }
+  .pin-rodape svg { width: 13px; height: 13px; }
 
   /* Navegação do mês */
   .nav-mes {
@@ -267,6 +272,7 @@
   .legenda { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; font-size: 11.5px; color: var(--texto-2); }
   .legenda span { display: inline-flex; align-items: center; gap: 5px; }
   .bolinha { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .calendario-vazio { font-size: 12.5px; color: var(--texto-2); text-align: center; padding: 40px 12px; line-height: 1.5; }
 
   /* Painel de ações do dia selecionado (fica entre o calendário e a relação) */
   .painel-acoes-dia {
@@ -306,7 +312,7 @@
 
   .acoes-relacao { display: flex; gap: 8px; margin-top: 12px; }
   .acoes-relacao button {
-    flex: 1; height: 36px; padding: 0 8px; font-size: 12.5px; background: var(--cinza); border-radius: 10px; font-weight: 600;
+    flex: 1; height: 32px; padding: 0 8px; font-size: 12.5px; background: var(--cinza); border-radius: 10px; font-weight: 600;
   }
   .acoes-relacao button:hover { background: #E2E8F0; }
   .acoes-relacao button.btn-excluir-relacao { background: none; color: var(--vermelho); border: 1px solid #FCA5A5; }
@@ -324,13 +330,30 @@
     pointer-events: auto;
   }
   .folha {
-    background: #fff; width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 24px;
-    max-height: 88vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(17,24,39,.15);
+    background: #fff; width: 100%; max-width: 480px; border-radius: 20px 20px 0 0;
+    max-height: 88vh; box-shadow: 0 -10px 40px rgba(17,24,39,.15);
     transform: translateY(24px); transition: transform .3s var(--ease);
+    display: flex; flex-direction: column;
   }
   .overlay.aberto .folha { transform: translateY(0); }
   .folha h2 { font-size: 18px; margin-bottom: 4px; }
-  .folha .subtitulo { font-size: 12.5px; color: var(--texto-2); margin-bottom: 16px; }
+  .folha .subtitulo { font-size: 12.5px; color: var(--texto-2); margin-bottom: 0; }
+
+  /* Cabeçalho e rodapé fixos, corpo com rolagem própria — evita rolar a tela
+     toda pra chegar nos botões quando o formulário fica comprido. */
+  .folha-cabecalho {
+    padding: 24px 24px 0; flex-shrink: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  }
+  .btn-fechar-modal {
+    background: var(--cinza); width: 32px; height: 32px; border-radius: 50%; padding: 0; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; color: var(--texto-2);
+  }
+  .btn-fechar-modal:hover { background: #E2E8F0; }
+  .btn-fechar-modal svg { width: 16px; height: 16px; }
+  .folha-corpo { padding: 0 24px 16px; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+  .folha-rodape { padding: 12px 24px 24px; flex-shrink: 0; border-top: 1px solid var(--borda); }
+  .linha-dupla { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .lista-itens-scroll { max-height: 144px; overflow-y: auto; }
 
   .linha-add-item { display: flex; gap: 8px; margin-top: 6px; }
   .linha-add-item input[type="text"] { flex: 1; }
@@ -378,9 +401,10 @@
   <div class="icone-pin"><i data-lucide="lock"></i></div>
   <h1 style="margin-bottom:6px;">Conferência</h1>
   <p style="color:var(--texto-2); font-size:13.5px; margin: 0 0 20px;">All in Hall — digite o PIN de acesso</p>
-  <input id="inputPin" type="password" inputmode="numeric" maxlength="8" placeholder="PIN">
-  <button class="btn-primaria" onclick="validarPin()">Entrar</button>
+  <input id="inputPin" type="password" inputmode="numeric" maxlength="8" placeholder="• • • •">
+  <button class="btn-primaria btn-icone" onclick="validarPin()">Entrar <i data-lucide="arrow-right"></i></button>
   <div id="erroPin"></div>
+  <div class="pin-rodape"><i data-lucide="shield"></i> Acesso seguro e restrito</div>
 </div>
 
 <div id="app" class="oculto">
@@ -432,25 +456,30 @@
     </div>
     <div class="coluna-calendario">
       <label>Condomínio</label>
-      <select id="selectCondominio" onchange="mudarCondominio()"></select>
+      <select id="selectCondominio" onchange="mudarCondominio()">
+        <option value="">Selecione um condomínio</option>
+      </select>
 
-      <div class="nav-mes">
-        <button onclick="mudarMes(-1)"><i data-lucide="chevron-left"></i></button>
-        <div class="titulo-mes" id="tituloMes">—</div>
-        <button onclick="mudarMes(1)"><i data-lucide="chevron-right"></i></button>
-      </div>
+      <div id="calendarioConteudo">
+        <div class="nav-mes">
+          <button onclick="mudarMes(-1)"><i data-lucide="chevron-left"></i></button>
+          <div class="titulo-mes" id="tituloMes">—</div>
+          <button onclick="mudarMes(1)"><i data-lucide="chevron-right"></i></button>
+        </div>
 
-      <div class="grade-semana">
-        <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
-      </div>
-      <div class="grade-dias" id="gradeDias"></div>
+        <div class="grade-semana">
+          <div>Dom</div><div>Seg</div><div>Ter</div><div>Qua</div><div>Qui</div><div>Sex</div><div>Sáb</div>
+        </div>
+        <div class="grade-dias" id="gradeDias"></div>
 
-      <div class="legenda">
-        <span><span class="bolinha" style="background:var(--verde)"></span> Fechado OK</span>
-        <span><span class="bolinha" style="background:var(--amarelo)"></span> Ocorrência</span>
-        <span><span class="bolinha" style="background:var(--azul)"></span> Sem operação</span>
-        <span><span class="bolinha" style="background:#e2e2e2"></span> Não conferido</span>
+        <div class="legenda">
+          <span><span class="bolinha" style="background:var(--verde)"></span> Fechado OK</span>
+          <span><span class="bolinha" style="background:var(--amarelo)"></span> Ocorrência</span>
+          <span><span class="bolinha" style="background:var(--azul)"></span> Sem operação</span>
+          <span><span class="bolinha" style="background:#e2e2e2"></span> Não conferido</span>
+        </div>
       </div>
+      <div id="calendarioVazio" class="calendario-vazio oculto">Selecione um condomínio acima para ver o calendário.</div>
 
       <div id="bannerCarregamento" class="banner"></div>
     </div>
@@ -479,45 +508,63 @@
 <!-- Modal: formulário de ocorrência -->
 <div class="overlay" id="overlayOcorrencia">
   <div class="folha">
-    <h2 id="tituloFormularioOcorrencia">Registrar ocorrência</h2>
-    <div class="subtitulo" id="subtituloOcorrencia">—</div>
-
-    <label>Data da ocorrência</label>
-    <input type="date" id="inputDataOcorrencia">
-
-    <label>Hora da ocorrência</label>
-    <input type="time" id="inputHora">
-
-    <label>Nome da pessoa (se souber — deixe em branco se não souber)</label>
-    <input type="text" id="inputPessoaNome" placeholder="Nome da pessoa">
-
-    <label>WhatsApp da pessoa (com DDD, se souber)</label>
-    <input type="text" id="inputPessoaWhatsapp" placeholder="Ex: 41999998888">
-
-    <label>Descrição da pessoa (opcional)</label>
-    <textarea id="inputDescricaoPessoa" rows="2" placeholder="Ex: mulher de casaco preto, saiu pro bloco B"></textarea>
-
-    <label>Itens retirados</label>
-    <div class="linha-add-item">
-      <input type="text" id="inputProdutoNovo" list="listaProdutosDatalist" placeholder="Digite o produto...">
-      <input type="number" id="inputQtdNovo" min="1" step="1" value="1">
-      <button type="button" onclick="adicionarItemNaLista()"><i data-lucide="plus"></i></button>
-    </div>
-    <datalist id="listaProdutosDatalist"></datalist>
-    <div id="listaItensAdicionados"></div>
-
-    <div class="total-box">
-      <span>Total</span>
-      <strong id="totalOcorrencia">R$ 0,00</strong>
+    <div class="folha-cabecalho">
+      <div>
+        <h2 id="tituloFormularioOcorrencia">Registrar ocorrência</h2>
+        <div class="subtitulo" id="subtituloOcorrencia">—</div>
+      </div>
+      <button type="button" class="btn-fechar-modal" onclick="fecharModal('overlayOcorrencia')"><i data-lucide="x"></i></button>
     </div>
 
-    <label>Observação</label>
-    <textarea id="inputObservacao" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
+    <div class="folha-corpo">
+      <div class="linha-dupla">
+        <div>
+          <label>Data da ocorrência</label>
+          <input type="date" id="inputDataOcorrencia">
+        </div>
+        <div>
+          <label>Hora da ocorrência</label>
+          <input type="time" id="inputHora">
+        </div>
+      </div>
 
-    <div id="bannerOcorrencia" class="banner"></div>
+      <div class="linha-dupla">
+        <div>
+          <label>Nome da pessoa</label>
+          <input type="text" id="inputPessoaNome" placeholder="Se souber — deixe em branco se não souber">
+        </div>
+        <div>
+          <label>WhatsApp</label>
+          <input type="text" id="inputPessoaWhatsapp" placeholder="Ex: 41999998888">
+        </div>
+      </div>
 
-    <button class="btn-primaria" id="botaoSalvarOcorrencia" onclick="salvarOcorrencia()">Salvar ocorrência</button>
-    <button class="btn-fechar" onclick="fecharModal('overlayOcorrencia')">Cancelar</button>
+      <label>Descrição da pessoa (opcional)</label>
+      <textarea id="inputDescricaoPessoa" rows="2" placeholder="Ex: mulher de casaco preto, saiu pro bloco B"></textarea>
+
+      <label>Itens retirados</label>
+      <div class="linha-add-item">
+        <input type="text" id="inputProdutoNovo" list="listaProdutosDatalist" placeholder="Digite o produto...">
+        <input type="number" id="inputQtdNovo" min="1" step="1" value="1">
+        <button type="button" onclick="adicionarItemNaLista()"><i data-lucide="plus"></i></button>
+      </div>
+      <datalist id="listaProdutosDatalist"></datalist>
+      <div id="listaItensAdicionados" class="lista-itens-scroll"></div>
+
+      <div class="total-box">
+        <span>Total</span>
+        <strong id="totalOcorrencia">R$ 0,00</strong>
+      </div>
+
+      <label>Observação</label>
+      <textarea id="inputObservacao" rows="2" placeholder="Observações adicionais (opcional)"></textarea>
+    </div>
+
+    <div class="folha-rodape">
+      <div id="bannerOcorrencia" class="banner"></div>
+      <button class="btn-primaria" id="botaoSalvarOcorrencia" onclick="salvarOcorrencia()">Salvar ocorrência</button>
+      <button class="btn-fechar" onclick="fecharModal('overlayOcorrencia')">Cancelar</button>
+    </div>
   </div>
 </div>
 
@@ -583,10 +630,11 @@ async function validarPin() {
 // ===================== INICIALIZAÇÃO =====================
 function inicializarApp() {
   const select = document.getElementById('selectCondominio');
-  select.innerHTML = bootstrap.condominios.map(function (c) {
-    return '<option value="' + c.nome_curto + '">' + c.nome_curto + '</option>';
-  }).join('');
-  condominioAtual = bootstrap.condominios[0] ? bootstrap.condominios[0].nome_curto : '';
+  select.innerHTML = '<option value="">Selecione um condomínio</option>' +
+    bootstrap.condominios.map(function (c) {
+      return '<option value="' + c.nome_curto + '">' + c.nome_curto + '</option>';
+    }).join('');
+  condominioAtual = '';
 
   const datalistProdutos = document.getElementById('listaProdutosDatalist');
   datalistProdutos.innerHTML = bootstrap.produtos.map(function (p) { return '<option value="' + p.nome + '">'; }).join('');
@@ -596,6 +644,15 @@ function inicializarApp() {
 
 function mudarCondominio() {
   condominioAtual = document.getElementById('selectCondominio').value;
+
+  // Ao trocar de condomínio, o dia que estava selecionado (se algum) pertencia ao
+  // condomínio anterior — esconde o painel de ações e a relação em vez de deixá-los
+  // mostrando informação desatualizada, até a pessoa tocar num dia de novo.
+  diaSelecionado = null;
+  document.querySelectorAll('.dia.selecionado').forEach(function (el) { el.classList.remove('selecionado'); });
+  document.getElementById('painelAcoesDia').classList.add('oculto');
+  document.getElementById('relacaoDia').classList.add('oculto');
+
   carregarCalendario();
 }
 
@@ -610,6 +667,17 @@ function mudarMes(delta) {
 const NOMES_MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 async function carregarCalendario() {
+  const conteudo = document.getElementById('calendarioConteudo');
+  const vazio = document.getElementById('calendarioVazio');
+
+  if (!condominioAtual) {
+    conteudo.classList.add('oculto');
+    vazio.classList.remove('oculto');
+    return;
+  }
+  conteudo.classList.remove('oculto');
+  vazio.classList.add('oculto');
+
   document.getElementById('tituloMes').textContent = NOMES_MESES[mesAtual - 1] + ' de ' + anoAtual;
   const banner = document.getElementById('bannerCarregamento');
   banner.className = 'banner';
