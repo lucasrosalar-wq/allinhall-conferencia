@@ -147,6 +147,7 @@
     .layout-gestao .coluna-calendario { flex: 0 0 260px; }
     .layout-gestao .coluna-detalhes { flex: 1 1 auto; min-width: 0; }
     .layout-gestao .mini-calendario { max-width: none; }
+    .layout-gestao .contagem-status { max-width: none; }
   }
 
   select, input, textarea, button { font-family: inherit; font-size: 14.5px; }
@@ -223,7 +224,11 @@
   }
   .mini-calendario-topo { display: flex; justify-content: space-between; align-items: center; gap: 6px; margin-bottom: 10px; }
   .mini-calendario-topo h3 { font-size: 13px; white-space: nowrap; }
-  .mini-calendario-topo select { width: auto; max-width: 110px; height: 30px; padding: 0 6px; font-size: 11px; }
+  .mini-cal-condominio {
+    font-size: 11px; font-weight: 700; color: var(--laranja-escuro); background: #FFF7ED; padding: 3px 9px;
+    border-radius: 20px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 130px;
+  }
+  .mini-cal-vazio { font-size: 12px; color: var(--texto-2); text-align: center; padding: 18px 4px; line-height: 1.5; }
   .mini-calendario-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
   .mini-calendario-nav button {
     background: var(--cinza); width: 24px; height: 24px; border-radius: 7px; font-size: 11px; padding: 0;
@@ -244,6 +249,18 @@
   .mini-calendario-legenda { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; font-size: 8.5px; color: var(--texto-2); }
   .mini-calendario-legenda span { display: inline-flex; align-items: center; gap: 3px; }
   .mini-calendario-legenda .bolinha { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+
+  /* Contagem de ocorrências por status, abaixo do mini-calendário */
+  .contagem-status {
+    background: #fff; border-radius: var(--raio); padding: 14px 16px; box-shadow: var(--sombra); border: 1px solid var(--borda);
+    max-width: 240px; display: flex; justify-content: space-between; gap: 8px;
+  }
+  .contagem-item { flex: 1; text-align: center; }
+  .contagem-numero { display: block; font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+  .contagem-rotulo { display: block; font-size: 10px; color: var(--texto-2); text-transform: uppercase; letter-spacing: .03em; margin-top: 2px; }
+  .contagem-item.pendente .contagem-numero { color: var(--preto); }
+  .contagem-item.cobrado .contagem-numero { color: var(--vermelho); }
+  .contagem-item.pago .contagem-numero { color: var(--verde); }
 
   /* Cards de ocorrência */
   .card {
@@ -514,21 +531,26 @@
         <div class="mini-calendario">
           <div class="mini-calendario-topo">
             <h3>Progresso do mês</h3>
-            <select id="miniCalCondominio" onchange="carregarMiniCalendario()"></select>
+            <span class="mini-cal-condominio" id="miniCalCondominioLabel">—</span>
           </div>
-          <div class="mini-calendario-nav">
-            <button type="button" onclick="mudarMesMiniCal(-1)"><i data-lucide="chevron-left"></i></button>
-            <div id="miniCalTitulo">—</div>
-            <button type="button" onclick="mudarMesMiniCal(1)"><i data-lucide="chevron-right"></i></button>
+          <div id="miniCalConteudo">
+            <div class="mini-calendario-nav">
+              <button type="button" onclick="mudarMesMiniCal(-1)"><i data-lucide="chevron-left"></i></button>
+              <div id="miniCalTitulo">—</div>
+              <button type="button" onclick="mudarMesMiniCal(1)"><i data-lucide="chevron-right"></i></button>
+            </div>
+            <div class="mini-calendario-grade" id="miniCalGrade"></div>
+            <div class="mini-calendario-legenda">
+              <span><span class="bolinha" style="background:var(--verde)"></span> OK</span>
+              <span><span class="bolinha" style="background:var(--amarelo)"></span> Ocorrência</span>
+              <span><span class="bolinha" style="background:var(--azul)"></span> Sem operação</span>
+              <span><span class="bolinha" style="background:#e2e2e2"></span> Não conferido</span>
+            </div>
           </div>
-          <div class="mini-calendario-grade" id="miniCalGrade"></div>
-          <div class="mini-calendario-legenda">
-            <span><span class="bolinha" style="background:var(--verde)"></span> OK</span>
-            <span><span class="bolinha" style="background:var(--amarelo)"></span> Ocorrência</span>
-            <span><span class="bolinha" style="background:var(--azul)"></span> Sem operação</span>
-            <span><span class="bolinha" style="background:#e2e2e2"></span> Não conferido</span>
-          </div>
+          <div id="miniCalVazio" class="mini-cal-vazio oculto">Selecione um condomínio nos filtros ao lado para ver o progresso do mês.</div>
         </div>
+
+        <div class="contagem-status" id="contagemStatus"></div>
       </div>
 
       <div class="coluna-detalhes">
@@ -789,8 +811,6 @@ function inicializarApp() {
   const datalistProdutos = document.getElementById('listaProdutosDatalist');
   datalistProdutos.innerHTML = bootstrap.produtos.map(function (p) { return '<option value="' + p.nome + '">'; }).join('');
 
-  const selectMiniCal = document.getElementById('miniCalCondominio');
-  selectMiniCal.innerHTML = bootstrap.condominios.map(function (c) { return '<option value="' + c.nome_curto + '">' + c.nome_curto + '</option>'; }).join('');
   carregarMiniCalendario();
 
   carregarOcorrencias();
@@ -809,7 +829,21 @@ function mudarMesMiniCal(delta) {
 }
 
 async function carregarMiniCalendario() {
-  const condominio = document.getElementById('miniCalCondominio').value;
+  const condominio = document.getElementById('filtroCondominio').value;
+  const conteudo = document.getElementById('miniCalConteudo');
+  const vazio = document.getElementById('miniCalVazio');
+  const rotulo = document.getElementById('miniCalCondominioLabel');
+
+  if (!condominio) {
+    rotulo.textContent = 'Todos';
+    conteudo.classList.add('oculto');
+    vazio.classList.remove('oculto');
+    return;
+  }
+  rotulo.textContent = condominio;
+  conteudo.classList.remove('oculto');
+  vazio.classList.add('oculto');
+
   document.getElementById('miniCalTitulo').textContent = NOMES_MESES_MINI_[miniCalMes - 1] + ' de ' + miniCalAno;
   try {
     const resposta = await chamarApi({ action: 'calendario', condominio: condominio, ano: miniCalAno, mes: miniCalMes });
@@ -818,6 +852,23 @@ async function carregarMiniCalendario() {
   } catch (err) {
     document.getElementById('miniCalGrade').innerHTML = '';
   }
+}
+
+// Contagem de ocorrências por status, filtrada só pelo condomínio (independente
+// dos filtros de status/data usados na lista de baixo).
+function renderizarContagemStatus() {
+  const condominio = document.getElementById('filtroCondominio').value;
+  let pendente = 0, cobrado = 0, pago = 0;
+  todasOcorrencias.forEach(function (o) {
+    if (condominio && o.condominio !== condominio) return;
+    if (o.status === 'Pendente' || o.status === 'Identificado') pendente++;
+    else if (o.status === 'Cobrado') cobrado++;
+    else if (o.status === 'Pago') pago++;
+  });
+  document.getElementById('contagemStatus').innerHTML =
+    '<div class="contagem-item pendente"><span class="contagem-numero">' + pendente + '</span><span class="contagem-rotulo">Pendente</span></div>' +
+    '<div class="contagem-item cobrado"><span class="contagem-numero">' + cobrado + '</span><span class="contagem-rotulo">Cobrado</span></div>' +
+    '<div class="contagem-item pago"><span class="contagem-numero">' + pago + '</span><span class="contagem-rotulo">Pago</span></div>';
 }
 
 function renderizarMiniCalendario(dados) {
@@ -887,6 +938,8 @@ function renderizarTotais() {
 // ===================== LISTA / FILTROS =====================
 function renderizarLista() {
   renderizarConsolidado();
+  carregarMiniCalendario();
+  renderizarContagemStatus();
 
   const condominio = document.getElementById('filtroCondominio').value;
   const status = document.getElementById('filtroStatus').value;
