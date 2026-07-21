@@ -1287,7 +1287,7 @@ function abrirCobrancaConsolidada(grupoId) {
 
   const corpoTabela = document.getElementById('itensConsolidados');
   corpoTabela.innerHTML = selecionadas.map(function (o) {
-    const resumoItens = o.itens.map(function (i) { return i.qtd + 'x ' + i.produto; }).join(', ');
+    const resumoItens = o.itens.map(function (i) { return i.qtd + 'x ' + i.produto; }).join('<br>');
     return '<tr><td>' + formatarDataBR(o.data_ocorrencia) + '</td><td>' + (o.hora || '—') + '</td><td>' + resumoItens + '</td><td>' + formatarMoeda(o.valor_total) + '</td></tr>';
   }).join('');
   document.getElementById('totalConsolidado').textContent = formatarMoeda(totalGeral);
