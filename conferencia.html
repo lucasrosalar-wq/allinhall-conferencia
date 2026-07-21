@@ -390,6 +390,7 @@
   }
   .banner.erro { background: #FEF2F2; color: #B91C1C; display: block; }
   .banner.sucesso { background: #F0FDF4; color: #15803D; display: block; }
+  .banner.carregando { background: var(--cinza); color: var(--texto-2); display: block; }
 
   .oculto { display: none !important; }
 </style>
@@ -579,6 +580,7 @@ let mesAtual = new Date().getMonth() + 1;
 let anoAtual = new Date().getFullYear();
 let condominioAtual = '';
 let dadosCalendario = { ocorrencias: [], diasFechados: [] };
+let cacheCalendario = {}; // chave 'condominio|ano|mes' -> dados já buscados (evita repetir fetch ao navegar entre meses já vistos)
 let diaSelecionado = null; // 'yyyy-mm-dd'
 let itensAdicionados = []; // [{ produto, qtd, preco_unit }] da ocorrência em edição
 let ultimoPayloadFalhou = null; // guarda a última tentativa de salvar ocorrência para permitir reenvio
@@ -602,7 +604,11 @@ async function chamarApi(params, metodo) {
     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
     body: JSON.stringify(comPin)
   });
-  return resp.json();
+  const resultado = await resp.json();
+  // Qualquer escrita (criar/editar/excluir ocorrência, fechar/limpar dia) pode
+  // mudar o que o calendário mostra — invalida o cache pra não exibir dado velho.
+  if (resultado.ok) cacheCalendario = {};
+  return resultado;
 }
 
 // ===================== PIN =====================
@@ -683,10 +689,22 @@ async function carregarCalendario() {
   banner.className = 'banner';
   banner.textContent = '';
 
+  const chaveCache = condominioAtual + '|' + anoAtual + '|' + mesAtual;
+  if (cacheCalendario[chaveCache]) {
+    dadosCalendario = cacheCalendario[chaveCache];
+    renderizarCalendario();
+    return;
+  }
+
+  banner.className = 'banner carregando';
+  banner.textContent = 'Carregando calendário...';
   try {
     const resposta = await chamarApi({ action: 'calendario', condominio: condominioAtual, ano: anoAtual, mes: mesAtual });
     if (!resposta.ok) throw new Error(resposta.erro);
     dadosCalendario = resposta.dados;
+    cacheCalendario[chaveCache] = resposta.dados;
+    banner.className = 'banner';
+    banner.textContent = '';
     renderizarCalendario();
   } catch (err) {
     banner.className = 'banner erro';
@@ -696,7 +714,9 @@ async function carregarCalendario() {
 
 function renderizarCalendario() {
   const grade = document.getElementById('gradeDias');
-  grade.innerHTML = '';
+  // Monta tudo num DocumentFragment (fora da árvore visível) e só encosta na
+  // grade de verdade uma vez no final — evita reflow a cada dia do loop.
+  const fragmento = document.createDocumentFragment();
 
   const primeiroDiaSemana = new Date(anoAtual, mesAtual - 1, 1).getDay();
   const diasNoMes = new Date(anoAtual, mesAtual, 0).getDate();
@@ -714,7 +734,7 @@ function renderizarCalendario() {
   for (let i = 0; i < primeiroDiaSemana; i++) {
     const vazio = document.createElement('div');
     vazio.className = 'dia vazio';
-    grade.appendChild(vazio);
+    fragmento.appendChild(vazio);
   }
 
   for (let dia = 1; dia <= diasNoMes; dia++) {
@@ -735,8 +755,11 @@ function renderizarCalendario() {
     if (dataISO === diaSelecionado) botao.classList.add('selecionado');
 
     botao.onclick = function () { abrirAcoesDia(dataISO, dia); };
-    grade.appendChild(botao);
+    fragmento.appendChild(botao);
   }
+
+  grade.innerHTML = '';
+  grade.appendChild(fragmento);
 }
 
 function formatarISO(data) {
