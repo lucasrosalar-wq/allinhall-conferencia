@@ -63,13 +63,7 @@
   .sidebar.aberta { transform: translateX(0); box-shadow: 0 0 40px rgba(17,24,39,.15); }
   .marca-sidebar { display: flex; align-items: center; justify-content: space-between; padding: 0 4px 0 6px; }
   .marca-sidebar .marca-texto { display: flex; align-items: center; gap: 9px; }
-  .icone-marca {
-    width: 30px; height: 30px; border-radius: 9px; background: var(--laranja); color: #fff; flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .icone-marca svg { width: 16px; height: 16px; }
   .marca-sidebar strong { font-size: 14.5px; letter-spacing: .01em; color: var(--preto); }
-  .marca-sidebar strong span { color: var(--laranja); }
   .btn-fechar-sidebar {
     background: none; width: 30px; height: 30px; padding: 0; border-radius: var(--raio-sm); color: var(--texto-2);
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -387,8 +381,7 @@
   <aside class="sidebar" id="sidebar">
     <div class="marca-sidebar">
       <div class="marca-texto">
-        <div class="icone-marca"><i data-lucide="home"></i></div>
-        <strong>ALL IN <span>HALL</span></strong>
+        <strong>All in hall</strong>
       </div>
       <button class="btn-fechar-sidebar" onclick="toggleSidebar(false)" title="Fechar menu"><i data-lucide="x"></i></button>
     </div>
