@@ -154,7 +154,6 @@
           <div id="miniCalVazio" class="mini-cal-vazio oculto">Selecione um condomínio nos filtros ao lado para ver o progresso do mês.</div>
         </div>
 
-        <div class="contagem-status" id="contagemStatus"></div>
       </div>
 
       <div class="coluna-detalhes">
@@ -166,6 +165,30 @@
             <select id="filtroCondominio" onchange="renderizarLista()"></select>
           </div>
           <div>
+            <label>Mês</label>
+            <select id="filtroMes" onchange="renderizarLista()">
+              <option value="">Todos</option>
+              <option value="01">Janeiro</option>
+              <option value="02">Fevereiro</option>
+              <option value="03">Março</option>
+              <option value="04">Abril</option>
+              <option value="05">Maio</option>
+              <option value="06">Junho</option>
+              <option value="07">Julho</option>
+              <option value="08">Agosto</option>
+              <option value="09">Setembro</option>
+              <option value="10">Outubro</option>
+              <option value="11">Novembro</option>
+              <option value="12">Dezembro</option>
+            </select>
+          </div>
+          <div>
+            <label>Ano</label>
+            <select id="filtroAno" onchange="renderizarLista()">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div>
             <label>De</label>
             <input type="date" id="filtroDataInicio" onchange="renderizarLista()">
           </div>
@@ -175,6 +198,8 @@
           </div>
           <button type="button" class="btn-primaria btn-icone btn-buscar" onclick="renderizarLista()"><i data-lucide="search"></i> Buscar</button>
         </div>
+
+        <div class="contagem-status" id="contagemStatus"></div>
       </div>
     </div>
 
