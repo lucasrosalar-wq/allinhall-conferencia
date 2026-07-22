@@ -130,33 +130,6 @@
       <h2>Gestão de Ocorrências</h2>
       <p>Acompanhe e gerencie todas as ocorrências do sistema</p>
     </div>
-    <div class="totais">
-      <div class="total-card pendente">
-        <div class="icone-kpi"><i data-lucide="clock"></i></div>
-        <div>
-          <div class="rotulo">Total pendente</div>
-          <div class="valor" id="totalPendente">R$ 0,00</div>
-          <div class="qtd" id="qtdPendente">0 ocorrências</div>
-        </div>
-      </div>
-      <div class="total-card cobrado">
-        <div class="icone-kpi"><i data-lucide="send"></i></div>
-        <div>
-          <div class="rotulo">Cobrado, aguardando</div>
-          <div class="valor" id="totalCobrado">R$ 0,00</div>
-          <div class="qtd" id="qtdCobrado">0 ocorrências</div>
-        </div>
-      </div>
-      <div class="total-card recebido">
-        <div class="icone-kpi"><i data-lucide="check-circle-2"></i></div>
-        <div>
-          <div class="rotulo">Recebido no mês</div>
-          <div class="valor" id="totalRecebido">R$ 0,00</div>
-          <div class="qtd" id="qtdRecebido">0 pagamentos</div>
-        </div>
-      </div>
-    </div>
-
     <div class="layout-gestao">
       <div class="coluna-calendario">
         <div class="mini-calendario">
@@ -193,17 +166,6 @@
             <select id="filtroCondominio" onchange="renderizarLista()"></select>
           </div>
           <div>
-            <label>Status</label>
-            <select id="filtroStatus" onchange="renderizarLista()">
-              <option value="">Todos</option>
-              <option value="Pendente">Pendente</option>
-              <option value="Identificado">Identificado</option>
-              <option value="Cobrado">Cobrado</option>
-              <option value="Pago">Pago</option>
-              <option value="Cancelado">Cancelado</option>
-            </select>
-          </div>
-          <div>
             <label>De</label>
             <input type="date" id="filtroDataInicio" onchange="renderizarLista()">
           </div>
@@ -213,9 +175,31 @@
           </div>
           <button type="button" class="btn-primaria btn-icone btn-buscar" onclick="renderizarLista()"><i data-lucide="search"></i> Buscar</button>
         </div>
+      </div>
+    </div>
 
-        <div id="bannerLista" class="banner"></div>
-        <div id="listaOcorrencias"></div>
+    <div id="bannerLista" class="banner"></div>
+    <div class="kanban-gestao" id="kanbanGestao">
+      <div class="kanban-coluna">
+        <div class="kanban-cabecalho pendente">
+          <div class="kanban-titulo">Pendente</div>
+          <div class="kanban-subtitulo" id="kanbanSubtituloPendente">R$ 0,00 · 0 ocorrências</div>
+        </div>
+        <div class="kanban-corpo" id="kanbanColunaPendente"></div>
+      </div>
+      <div class="kanban-coluna">
+        <div class="kanban-cabecalho cobrado">
+          <div class="kanban-titulo">Cobrado, aguardando</div>
+          <div class="kanban-subtitulo" id="kanbanSubtituloCobrado">R$ 0,00 · 0 ocorrências</div>
+        </div>
+        <div class="kanban-corpo" id="kanbanColunaCobrado"></div>
+      </div>
+      <div class="kanban-coluna">
+        <div class="kanban-cabecalho recebido">
+          <div class="kanban-titulo">Recebido no mês</div>
+          <div class="kanban-subtitulo" id="kanbanSubtituloRecebido">R$ 0,00 · 0 pagamentos</div>
+        </div>
+        <div class="kanban-corpo" id="kanbanColunaRecebido"></div>
       </div>
     </div>
   </div>
